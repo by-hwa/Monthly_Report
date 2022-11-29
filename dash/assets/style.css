@@ -1,0 +1,74 @@
+html{
+    background-color: #000000;
+    margin: 3%;
+}
+
+.header{
+    /*background-color: #000000;*/
+    font-size: 50px;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin-left: 0.5%;
+}
+
+.text{
+    font-size: 25px;
+    font-weight: normal;
+    color: #FFFFFF;
+    margin-left: 0.5%;
+}
+
+.ContentText{
+    font-size: 20px;
+    color: #FFFFFF;
+    margin-top: 7.5%;
+}
+
+H1, H2, H3, H4, H5, H6, Div{
+    color : #FFFFFF;
+}
+
+.button{
+    background-color: transparent;
+    border-radius: 0.2em;
+    font-size: 20px;
+    text-shadow: 0px 0px 0px #000000;
+    width : 90%;
+    height : 2em;
+    color : #65A4ECFF;
+    border-color : transparent;
+    text-align : left;
+}
+
+.button:hover{
+    background-color: #484848;
+}
+
+.button:active{
+    background-color: black;
+}
+
+
+/*drop down select list background*/
+.VirtualizedSelectOption {
+    background-color: #000000;
+    color: #aaa;
+}
+
+/*drop down select list mouse hover background*/
+.VirtualizedSelectFocusedOption {
+    background-color: #484848;
+    /*color: #FFFFFF;*/
+}
+
+.Select-control {
+  background-color: #000000;
+}
+
+.Select-menu-outer {
+  background-color: #000000;
+}
+
+.Select-value .Select-value-label{
+    color: #aaa !important;
+}
