@@ -37,6 +37,8 @@ H1, H2, H3, H4, H5, H6, Div{
     height : 2em;
     color : #65A4ECFF;
     border-color : transparent;
+    border-style: solid;
+    box-shadow: unset;
     text-align : left;
 }
 
@@ -46,8 +48,35 @@ H1, H2, H3, H4, H5, H6, Div{
 
 .button:active{
     background-color: black;
+    box-shadow: unset;
 }
 
+.push-button{
+    background-color: transparent;
+    border-radius: 0.2em;
+    font-size: 20px;
+    text-shadow: 0px 0px 0px #000000;
+    width : 100%;
+    height : 2em;
+    color : #65A4ECFF;
+    border-color : #65A4ECFF;
+    border-style: solid;
+    box-shadow: unset;
+    text-align : center;
+}
+.push-button:hover{
+    background-color: #484848;
+}
+
+.push-button:active{
+    background-color: black;
+    box-shadow: unset;
+}
+
+.fig{
+    background-color: #000000;
+    color: #65A4ECFF;
+}
 
 /*drop down select list background*/
 .VirtualizedSelectOption {
