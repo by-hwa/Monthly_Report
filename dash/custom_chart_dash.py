@@ -531,7 +531,7 @@ def main():
         prevent_initial_call=True,
     )
     def func(n_clicks):
-        return dict(content=mqtt_df.to_csv(), filename="Reports.csv")
+        return dict(content=mqtt_df.to_csv, filename="Reports.csv")
 
     # sidebar
     @app.callback(
