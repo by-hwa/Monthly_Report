@@ -526,12 +526,12 @@ def main():
         return return_value
 
     @app.callback(
-        Output("download-text", "data"),
-        Input("btn-download-txt", "n_clicks"),
+        Output("download-report", "data"),
+        Input("btn-download-report", "n_clicks"),
         prevent_initial_call=True,
     )
     def func(n_clicks):
-        return dict(content=mqtt_df.to_csv, filename="Reports.csv")
+        return dcc.send_data_frame(writer=mqtt_df.to_csv, filename="Reports.csv")
 
     # sidebar
     @app.callback(
