@@ -362,7 +362,7 @@ def select_subscribe_type():
 
 
 def download():
-    return html.br(),\
+    return html.Br(),\
             html.Button("Download Report", id="btn-download-report", className='push-button'),\
             dcc.Download(id="download-report")
 
