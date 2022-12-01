@@ -140,23 +140,34 @@ def select_chart_type():
 
 
 def select_data_value():
-    return html.H2(children='Select data value1'), \
-                dcc.Dropdown(
-                    style={'background-color': '#000000', 'color': '#aaa'},
-                    options=data_list,
-                    placeholder='select data value1...',
-                    id='dropdown-selected-data-value1',),\
-                html.H2(children='Select data value2'), \
-                dcc.Dropdown(
-                    style={'background-color': '#000000', 'color': '#aaa'},
-                    options=data_list,
-                    placeholder='select data value2...',
-                    id='dropdown-selected-data-value2',),\
-                html.Div(
-                    style={'margin-top': '7.5%'},
-                    id='selected-data-value',),\
-                html.Div(
-                    id='input-width-height')
+    return html.Div(style={'display': 'flex', 'flex-direction': 'row'},
+                    children=[
+                        html.Div(
+                            style={'flex':1, 'width': '100%'},
+                            children=[
+                                html.H2(children='Select data value1'),
+                                dcc.Dropdown(
+                                    style={'background-color': '#000000', 'color': '#aaa', 'width': '90%'},
+                                    options=data_list,
+                                    placeholder='select data value1...',
+                                    id='dropdown-selected-data-value1', ),
+                            ]
+                        ),
+                        html.Div(
+                            style={'flex':1, 'width':'100%'},
+                            children=[
+                                html.H2(children='Select data value2'),
+                                dcc.Dropdown(
+                                    style={'background-color': '#000000', 'color': '#aaa', 'width': '90%'},
+                                    options=data_list,
+                                    placeholder='select data value2...',
+                                    id='dropdown-selected-data-value2', ),
+                            ]
+                        )]
+                    ),\
+           html.Div(style={'margin-top': '7.5%'},
+                    id='selected-data-value', ),\
+           html.Div(id='input-width-height')
 
 
 def enter_width_height():
