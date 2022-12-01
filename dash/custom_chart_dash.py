@@ -68,7 +68,7 @@ def render_main():
 
 def default_page():
     return html.Div(
-                style={'margin-left': '10%'},
+                style={'margin-left': '5%'},
                 children=[
                     html.H1(children='매달 정기 발간 리포트'),
                     html.Br(),
@@ -79,7 +79,7 @@ def default_page():
 
 def make_report():
     return html.Div(
-                style={'margin-left': '10%'},
+                style={'margin-left': '5%'},
                 children=[
                     # 1st dropdown box
                     html.H1(children='Make Report Page'),
@@ -218,7 +218,7 @@ def enter_width_height():
 
 def custom_setting():
     return html.Div(
-                style={'margin-left': '10%'},
+                style={'margin-left': '5%'},
                 children=[
                     # 1st dropdown box
                     html.H1(children='Custom Setting Page'),
@@ -301,7 +301,7 @@ def build_data_table():
 
 def manage_subscribe():
     return html.Div(
-                style={'margin-left': '10%'},
+                style={'margin-left': '5%'},
                 children=[
                     # 1st dropdown box
                     html.H1(children='Subscribe Manage Page'),
@@ -367,7 +367,11 @@ def select_subscribe_type():
         children=[
             html.H2('구독 방법 선택'),
             dcc.Dropdown(options=subscribe_type, style={'margin-bottom': '5%'}),
-            html.Button('구독', className='push-button')
+            dcc.ConfirmDialogProvider(
+                children=html.Button('구독', className='push-button'),
+                id='subscribe-popup',
+                message='구독하시겠습니까 ? '
+            )
         ]
     )
 
