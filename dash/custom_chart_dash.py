@@ -6,6 +6,8 @@ import plotly.express as px
 import pandas as pd
 import paho.mqtt.client as mqtt
 import json
+from drag_and_drop_test import *
+import dash_draggable
 
 
 # assume you have a "long-form" data frame
@@ -58,6 +60,7 @@ def render_sidebar():
             html.Button(children='Custom Setting', id='setting-btn', className='button'),
             html.Button(children='Make Report', id='report-btn', className='button'),
             html.Button(children='Manage Subscribe', id='subscribe-btn', className='button'),
+            html.Button(children='drag and drop test', id='drag-and-drop-btn', className='button'),
         ])
 
 
@@ -558,6 +561,7 @@ def main():
         Input(component_id='setting-btn', component_property='n_clicks'),
         Input(component_id='report-btn', component_property='n_clicks'),
         Input(component_id='subscribe-btn', component_property='n_clicks'),
+        Input(component_id='drag-and-drop-btn', component_property='n_clicks'),
         prevent_inital_call=True,
     )
     def upload_main_page(*args):
@@ -566,17 +570,23 @@ def main():
         if triggered_id == 'setting-btn':
             return_value[0] = custom_setting()
             return_value[1] = {'border-color': '#65A4ECFF'}
-            return return_value
         elif triggered_id == 'report-btn':
             return_value[0] = make_report()
             return_value[2] = {'border-color': '#65A4ECFF'}
-            return return_value
         elif triggered_id == 'subscribe-btn':
             return_value[0] = manage_subscribe()
             return_value[3] = {'border-color': '#65A4ECFF'}
-            return return_value
-        else:
-            return return_value
+        elif triggered_id == 'drag-and-drop-btn':
+            return_value[0] = drag_and_drop()
+        return return_value
+
+    @app.callback(
+        Output(component_id='drag-test', component_property='children'),
+        Input(component_id='draggable', component_property='layout'),
+        prevent_inital_call=True,
+    )
+    def test(layout):
+        return f'값 !! : {layout}'
 
 
 if __name__ == '__main__':
