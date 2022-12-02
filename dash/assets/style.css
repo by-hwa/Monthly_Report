@@ -28,6 +28,14 @@ H1, H2, H3, H4, H5, H6, Div{
     color : #FFFFFF;
 }
 
+.item-content, .item-top{
+    background-color: #000000;
+}
+
+.draggable_card{
+    background-color: #000000;
+}
+
 .button{
     background-color: transparent;
     border-radius: 0.2em;
@@ -91,13 +99,17 @@ H1, H2, H3, H4, H5, H6, Div{
 }
 
 .Select-control {
-  background-color: #000000;
+    background-color: #000000;
 }
 
 .Select-menu-outer {
-  background-color: #000000;
+    background-color: #000000;
 }
 
-.Select-value .Select-value-label{
+.Select.is-focused {!important;
+    background-color: #484848;
+}
+
+.Select-value .Select-value-label {
     color: #aaa !important;
 }

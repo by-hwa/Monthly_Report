@@ -281,12 +281,14 @@ def render_exam():
         paper_bgcolor='#000000',
         font_color='#7FDBFF',)
 
+    draggable_layout_list.append(dcc.Graph(id='chart', figure=fig))
+
     return html.H2(children='Exam Report',),\
         dcc.Graph(figure=fig)
 
 
 def build_data_table():
-    return dash_table.DataTable(
+    data_table = dash_table.DataTable(
                 data=mqtt_df.to_dict('records'),
                 columns=[{'id': c, 'name': c}for c in mqtt_df.columns],
                 style_header={
@@ -300,6 +302,10 @@ def build_data_table():
                 page_size=10,
                 style_table={'overflowX': 'auto', 'overflowY': 'auto'},
                 )
+    data_table.id = 'data-table'
+    draggable_layout_list.append(data_table)
+    data_table.id = 'data-table1'
+    return data_table
 
 
 def manage_subscribe():
@@ -348,13 +354,13 @@ def period_setting():
         style={'display': 'flex', 'flex-direction': 'row', 'margin-top': '5%'},
         children=[
             html.H3(children='주기 : '),
-            dcc.Dropdown(id='select-period', options=['매달', '매주', '매일'], style={'margin': '2.5%'}),
+            dcc.Dropdown(id='select-period', options=['매달', '매주', '매일'], style={'margin': '2.5%','background-color': '#000000', 'color': '#aaa'}),
             html.H3(children='날짜 : '),
-            dcc.Dropdown(id='select-date', options=[x for x in range(30)], style={'margin': '2.5%'}),
+            dcc.Dropdown(id='select-date', options=[x for x in range(30)], style={'margin': '2.5%','background-color': '#000000', 'color': '#aaa'}),
             html.H3(children='요일 : '),
-            dcc.Dropdown(id='select-day', options=['월', '화', '수', '목', '금', '토', '일'], style={'margin': '2.5%'}),
+            dcc.Dropdown(id='select-day', options=['월', '화', '수', '목', '금', '토', '일'], style={'margin': '2.5%','background-color': '#000000', 'color': '#aaa'}),
             html.H3(children='시간 : '),
-            dcc.Dropdown(id='select-time', options=[str(x)+':00' for x in range(24)], style={'margin': '2.5%'})
+            dcc.Dropdown(id='select-time', options=[str(x)+':00' for x in range(24)], style={'margin': '2.5%','background-color': '#000000', 'color': '#aaa'})
         ])
 
 
@@ -362,14 +368,15 @@ def triggered_setting():
     return html.Div(
         style={'margin-top': '5%'},
         children=[html.H2('트리거 선택'),
-                  dcc.Dropdown(id='selected-trigger', options=['tri1', 'tri2', 'tri3'], multi=True)])
+                  dcc.Dropdown(id='selected-trigger', options=['tri1', 'tri2', 'tri3'], multi=True,
+                               style={'background-color': '#000000', 'color': '#aaa'})])
 
 
 def select_subscribe_type():
     return html.Div(
         children=[
             html.H2('구독 방법 선택'),
-            dcc.Dropdown(options=subscribe_type, style={'margin-bottom': '5%'}),
+            dcc.Dropdown(options=subscribe_type, style={'margin-bottom': '5%','background-color': '#000000', 'color': '#aaa'}),
             dcc.ConfirmDialogProvider(
                 children=html.Button('구독', className='push-button'),
                 id='subscribe-popup',
@@ -383,6 +390,34 @@ def download():
     return html.Br(),\
             html.Button("Download Report", id="btn-download-report", className='push-button'),\
             dcc.Download(id="download-report")
+
+
+def draggable_interface():
+    df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminderDataFiveYear.csv')
+    return html.Div([
+        html.H1("Dash Draggable"),
+        html.B("Description:"),
+        html.Ul([
+            html.Li("The chart is not draggable nor resizeable (with the value 'static' set to True in 'layout')."),
+            html.Li("The slider is draggable and resizeable.")
+        ]),
+        dash_draggable.GridLayout(
+            id='draggable',
+            clearSavedLayout=True,
+            style={'background-color': '#484848'},
+            children=draggable_layout_list,
+            ),
+        html.Div(id='drag-test'),
+        dcc.ConfirmDialogProvider(
+            children=html.Button(children='Submit', className='push-button', id='layout-submit-btn'),
+            id='layout-submit',
+            message='레이아웃이 저장되었습니다 !'
+        ),
+        ])
+
+
+def make_layout():
+    pass
 
 
 def main():
@@ -400,6 +435,7 @@ def main():
     )
     def update_selected_template(value):
         custom_setting_dict['template'] = value
+        draggable_layout_list.append(html.Div(id='template', children=value))
         return f'Selected Template is [ {value} ]'
 
     @app.callback(
@@ -412,6 +448,7 @@ def main():
     def update_selected_file(value):
         custom_setting_dict['file'] = value
         if value:
+            draggable_layout_list.append(html.Div(id='file-name', children=value))
             return f'Selected file [ {value} ]', 'ContentText', build_data_table()
         else:
             return f'Selected file [ {value} ]', 'ContentText', ''
@@ -449,9 +486,10 @@ def main():
         Output(component_id='input-width-height', component_property='children'),
         Input(component_id='dropdown-selected-data-value1', component_property='value'),
         Input(component_id='dropdown-selected-data-value2', component_property='value'),
+        Input(component_id='dropdown-selected-chart-type', component_property='value'),
         prevent_initial_call=False,
     )
-    def update_selected_data_value(value1, value2):
+    def update_selected_data_value(value1, value2, chart_type):
         if value1 and value2:
             custom_setting_dict['value1'] = value1
             custom_setting_dict['value2'] = value2
@@ -577,7 +615,7 @@ def main():
             return_value[0] = manage_subscribe()
             return_value[3] = {'border-color': '#65A4ECFF'}
         elif triggered_id == 'drag-and-drop-btn':
-            return_value[0] = drag_and_drop()
+            return_value[0] = draggable_interface()
         return return_value
 
     @app.callback(
@@ -617,6 +655,7 @@ if __name__ == '__main__':
     ETL_recipe_list = ['mean', 'std', 'min', 'max', 'mid']
     subscribe_period = ['설정 구독 주기 리포트 발행', '트리거 동작시 리포트 발행']
     subscribe_type = ['메일 내 링크', 'pdf', 'excel']
+    draggable_layout_list = []
 
     for i in range(100):
         client.loop()
