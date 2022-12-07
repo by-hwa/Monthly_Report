@@ -98,7 +98,7 @@ def make_report():
                                 id='dropdown-selected-template',
                             ),
                             html.Div(
-                                style={'margin-top': '7.5%'},
+                                style={'margin-top': '2.5%'},
                                 id='selected-template',)
                         ]
                     ),
@@ -114,12 +114,14 @@ def make_report():
                             ),
 
                             html.Div(
-                                style={'margin-top': '7.5%'},
+                                style={'margin-top': '2.5%'},
                                 id='selected-file',
                             ),
                         ],
                     ),
-                    html.Div(id='selected-file-df'),
+                    html.Div(
+                        style={'padding-right': '20%'},
+                        id='selected-file-df'),
                     html.Div(  # chart type dropdown
                         style={'padding-right': '20%'},
                         id='select-chart-type-dropdown',
@@ -136,7 +138,7 @@ def select_chart_type():
                         placeholder='select chart...',
                         id='dropdown-selected-chart-type',),\
                     html.Div(
-                        style={'margin-top': '7.5%'},
+                        style={'margin-top': '2.5%'},
                         id='selected-chart-type',),\
                     html.Div(
                         id='select-data-value-dropdown')
@@ -168,7 +170,7 @@ def select_data_value():
                             ]
                         )]
                     ),\
-           html.Div(style={'margin-top': '7.5%'},
+           html.Div(style={'margin-top': '2.5%'},
                     id='selected-data-value', ),\
            html.Div(id='input-width-height')
 
@@ -209,13 +211,13 @@ def enter_width_height():
                      )
                     ]),\
            html.Div(
-                style={'margin-top': '7.5%'},
+                style={'margin-top': '2.5%'},
                 id='entered-width-height',),\
            html.Div(
-                style={'margin-top': '7.5%'},
+                style={'margin-top': '2.5%'},
                 id='make-exam-button', ),\
            html.Div(
-                style={'margin-top': '7.5%'},
+                style={'margin-top': '2.5%'},
                 id='make-exam', )
 
 
@@ -237,7 +239,7 @@ def custom_setting():
                                 id='dropdown-selected-equipment',
                             ),
                             html.Div(
-                                style={'margin-top': '7.5%'},
+                                style={'margin-top': '2.5%'},
                                 id='selected-equipment',
                             ),
                         ],
@@ -259,7 +261,7 @@ def select_ETL_recipe():
                     id='dropdown-selected-ETL-recipe',
                 ),\
                 html.Div(
-                    style={'margin-top': '7.5%'},
+                    style={'margin-top': '2.5%'},
                     id='selected-ETL-recipe',)
 
 
@@ -376,7 +378,7 @@ def select_subscribe_type():
     return html.Div(
         children=[
             html.H2('구독 방법 선택'),
-            dcc.Dropdown(options=subscribe_type, style={'margin-bottom': '5%','background-color': '#000000', 'color': '#aaa'}),
+            dcc.Dropdown(options=subscribe_type, style={'margin-bottom': '5%', 'background-color': '#000000', 'color': '#aaa'}),
             dcc.ConfirmDialogProvider(
                 children=html.Button('구독', className='push-button'),
                 id='subscribe-popup',
@@ -414,10 +416,6 @@ def draggable_interface():
             message='레이아웃이 저장되었습니다 !'
         ),
         ])
-
-
-def make_layout():
-    pass
 
 
 def main():
@@ -595,6 +593,7 @@ def main():
         Output(component_id='setting-btn', component_property='style'),
         Output(component_id='report-btn', component_property='style'),
         Output(component_id='subscribe-btn', component_property='style'),
+        Output(component_id='drag-and-drop-btn', component_property='style'),
 
         Input(component_id='setting-btn', component_property='n_clicks'),
         Input(component_id='report-btn', component_property='n_clicks'),
@@ -604,7 +603,7 @@ def main():
     )
     def upload_main_page(*args):
         triggered_id = ctx.triggered_id
-        return_value = [default_page(), {}, {}, {}]
+        return_value = [default_page(), {}, {}, {}, {}]
         if triggered_id == 'setting-btn':
             return_value[0] = custom_setting()
             return_value[1] = {'border-color': '#65A4ECFF'}
@@ -616,6 +615,7 @@ def main():
             return_value[3] = {'border-color': '#65A4ECFF'}
         elif triggered_id == 'drag-and-drop-btn':
             return_value[0] = draggable_interface()
+            return_value[4] = {'border-color': '#65A4ECFF'}
         return return_value
 
     @app.callback(

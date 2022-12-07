@@ -66,8 +66,8 @@ H1, H2, H3, H4, H5, H6, Div{
     text-shadow: 0px 0px 0px #000000;
     width : 100%;
     height : 2em;
-    color : #65A4ECFF;
-    border-color : #65A4ECFF;
+    color : #b96a6a;
+    border-color : #b96a6a;
     border-style: solid;
     box-shadow: unset;
     text-align : center;
@@ -77,7 +77,7 @@ H1, H2, H3, H4, H5, H6, Div{
 }
 
 .push-button:active{
-    background-color: black;
+    background-color: transparent;
     box-shadow: unset;
 }
 
