@@ -1,12 +1,11 @@
-# Run this app with `python app.py` and
+# Run this app with `python application.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
-
+import flask
 from dash import Dash, html, dcc, Input, Output, ctx, State, dash_table
 import plotly.express as px
 import pandas as pd
 import paho.mqtt.client as mqtt
 import json
-from drag_and_drop_test import *
 import dash_draggable
 
 
@@ -627,27 +626,21 @@ def main():
         return f'값 !! : {layout}'
 
 
-if __name__ == '__main__':
-
+# if __name__ == '__main__':
+if True:
     json_mqtt = []
 
-    client = mqtt.Client()
-    client.on_connect = on_connect
-    client.on_disconnect = on_disconnect
-    client.on_subscribe = on_subscribe
-    client.on_message = on_message
-    # address : localhost, port: 1883 에 연결
-    client.connect('3.38.255.45', 1883)
-    # common topic 으로 메세지 발행
-    client.subscribe('vib_data')
-
-    css_list = ['./assets/']
-    app = Dash(__name__, external_stylesheets=css_list,
-               suppress_callback_exceptions=True,
-               # use_pages=True,
-               title="Monthly Report",)
-
-    custom_setting_dict = {'template': '', 'file': '', 'chart type': '', 'value1': '', 'value2': '', 'height': '', 'width': ''}
+    # client = mqtt.Client()
+    # client.on_connect = on_connect
+    # client.on_disconnect = on_disconnect
+    # client.on_subscribe = on_subscribe
+    # client.on_message = on_message
+    # # address : localhost, port: 1883 에 연결
+    # client.connect('3.38.255.45', 1883)
+    # # common topic 으로 메세지 발행
+    # client.subscribe('vib_data')
+    custom_setting_dict = {'template': '', 'file': '', 'chart type': '', 'value1': '', 'value2': '', 'height': '',
+                           'width': ''}
     equipment_list = ['nc쿠션', 'press', 'other']
     template_list = ['월간 운영 리포트', '월간 보전 리포트', '특정 기간의 변화 체크 리포트']
     csv_file_list = ['1.csv', '2.csv', '3.csv', '4.csv']
@@ -657,11 +650,33 @@ if __name__ == '__main__':
     subscribe_type = ['메일 내 링크', 'pdf', 'excel']
     draggable_layout_list = []
 
-    for i in range(100):
-        client.loop()
-    mqtt_df = pd.DataFrame(json_mqtt).applymap(lambda x: ', '.join(list(map(str, x))) if type(x) == list else x)
-    data_list = mqtt_df.columns
-    client.disconnect()
+    # for i in range(100):
+    #     client.loop()
+    # mqtt_df = pd.DataFrame(json_mqtt).applymap(lambda x: ', '.join(list(map(str, x))) if type(x) == list else x)
+    mqtt_df = []
+    data_list = []
+    # data_list = mqtt_df.columns
+    # client.disconnect()
+
+    application = flask.Flask(__name__)
+
+    css_list = ['./assets/']
+    app = Dash(__name__, external_stylesheets=css_list, suppress_callback_exceptions=True,
+                    server=application, url_base_pathname='/',
+                    title="Monthly Report",# use_pages=True,
+                    )
+
+    # app = Dash(__name__, external_stylesheets=css_list, suppress_callback_exceptions=True,
+    #            url_base_pathname='/', title="Monthly Report",)
+
     main()
 
-    app.run_server(debug=True)
+    application = app.server
+
+    # app.run_server(debug=True)
+
+if __name__ == '__main__':
+    # application.debug = True
+    application.run(host='0.0.0.0', port='8080')
+
+
