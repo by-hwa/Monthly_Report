@@ -17,9 +17,11 @@ data.index = pd.to_datetime(data.index)
 data['date'] = data.index
 data['date'] = data['date'].apply(lambda x: x.date())
 data["sumData"] = data["cycleIndex"]+data["contiIndex"]
-health_percent = 50
+health_percent = 0.5
 month_data = data["sumData"]
 limit = 10000
+heatmap_click_x = 0
+heatmap_click_y = 0
 
 filtered_data = data.copy()
 
@@ -48,13 +50,14 @@ def fig_layout(fig):
         showlegend=False,
     )
 
+
 def list2matrix(data, front):
     back = 24 - ((len(data) + front) % 24)
     matrix = np.concatenate(([0]*front, data, [0]*back)).reshape(-1, 24).T
     return matrix.astype(int)
 
 
-def make_hit_map(monthdata=data["contiIndex"] + data["cycleIndex"],
+def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
                  limit=10000, normal=False, abnormal=False):
 
     if normal: monthdata[monthdata < limit] = 0
@@ -62,11 +65,32 @@ def make_hit_map(monthdata=data["contiIndex"] + data["cycleIndex"],
 
     monthdata = list2matrix(monthdata, front=9).copy()
 
-    fig = ff.create_annotated_heatmap(monthdata[:, 0:31], x=list(range(1, 32, 1)), y=list(range(24)),
-                                      annotation_text=monthdata[:, 0:31], colorscale='Viridis', xgap=1, ygap=1)
+    fig = go.Figure(data=go.Heatmap(
+        z=monthdata[:, 0:31],
+        x=list(range(1, 32, 1)),
+        y=list(range(24)),
+        text=monthdata[:, 0:31],
+        xgap=1, ygap=1,
+        texttemplate="%{text}",
+        hovertemplate="%{x}day %{y}hour  <extra></extra>",
+        textfont={"size": 10},
+        colorscale=[[0.0, "rgb(165,0,38)"],
+                    # [0.1111111111111111, "rgb(215,48,39)"],
+                    # [0.2222222222222222, "rgb(244,109,67)"],
+                    # [0.3333333333333333, "rgb(253,174,97)"],
+                    # [0.4444444444444444, "rgb(254,224,144)"],
+                    [health_percent, "rgb(224,243,248)"],
+                    # [0.6666666666666666, "rgb(171,217,233)"],
+                    # [0.7777777777777778, "rgb(116,173,209)"],
+                    # [0.8888888888888888, "rgb(69,117,180)"],
+                    [1.0, "rgb(49,54,149)"]],
+    ))
+
+    # fig = ff.create_annotated_heatmap(monthdata[:, 0:31], x=list(range(1, 32, 1)), y=list(range(24)),
+    #                                   annotation_text=monthdata[:, 0:31], colorscale='phase', xgap=1, ygap=1)
     fig.update_layout(margin=dict(t=2, r=2, b=2, l=2), width=1400, height=700, xaxis=dict(showgrid=False),
                       yaxis=dict(autorange="reversed", showgrid=False), yaxis_title="Hour", xaxis_title="Day")
-    fig.data[0].hovertemplate = "%{x}day %{y}hour  <extra></extra>"
+    # fig.data[0].hovertemplate = "%{x}day %{y}hour  <extra></extra>"
 
     fig.update_layout(
         # title='GitHub commits per day',
@@ -159,7 +183,11 @@ def make_bar_chart2(operation_data=api_module.operation(time.mktime(datetime.dat
     return fig
 
 
-def make_line_chart(raw_data=api_module.operation(time.mktime(datetime.datetime.today().timetuple()))):
+def make_line_chart(raw_data=api_module.rawdata(time.mktime(datetime.datetime.today().timetuple()))):
+
+    if raw_data.empty:
+        fig = px.line()
+        return fig
 
     fig = px.line(raw_data, x='timestamp', y=list(raw_data.columns))
     fig.update_layout(
@@ -223,9 +251,9 @@ def render_main():
             ],
         )
 
-    def hit_map():
-        fig = make_hit_map()
-        return dcc.Graph(id='hit-map', figure=fig)
+    def heat_map():
+        fig = make_heat_map()
+        return dcc.Graph(id='heat-map', figure=fig)
 
     def threshold_button_set():
         return html.Div(
@@ -247,8 +275,8 @@ def render_main():
                     style={'left-margin': 'auto', 'top-margin': '1em'},
                     children=[
                         html.Button(id='apply', children='적용', className='button'),
-                        html.Button(id='normal', children='정상', className='button'),
-                        html.Button(id='abnormal', children='비정상', className='button'),
+                        # html.Button(id='normal', children='정상', className='button'),
+                        # html.Button(id='abnormal', children='비정상', className='button'),
                     ]
                 ),
             ],
@@ -258,7 +286,7 @@ def render_main():
                     style={'flex': 3},
                     children=[
                         title_button_set(),
-                        hit_map(),
+                        heat_map(),
                         html.H3("건정성 판정 기준(%)"),
                         threshold_button_set(),
                         html.H3(id="health-percent"),
@@ -313,13 +341,14 @@ def main():
         children=[render_main(), render_detail()],)
 
     @app.callback(
-        Output(component_id='hit-map', component_property='figure'),
+        Output(component_id='heat-map', component_property='figure'),
         Input(component_id='picked-date', component_property='date'),
         Input(component_id='cyclic', component_property='n_clicks'),
         Input(component_id='conti', component_property='n_clicks'),
         Input(component_id='total', component_property='n_clicks'),
-        Input(component_id='normal', component_property='n_clicks'),
-        Input(component_id='abnormal', component_property='n_clicks'),
+        Input(component_id='apply', component_property='n_clicks'),
+        # Input(component_id='normal', component_property='n_clicks'),
+        # Input(component_id='abnormal', component_property='n_clicks'),
         prevent_initial_call=True,
     )
     def update_chart(picked_date, *args):
@@ -350,7 +379,7 @@ def main():
             normal = True
         elif triggered_id == 'abnormal':
             abnormal = True
-        return make_hit_map(monthdata=month_data.copy(), limit=limit, normal=normal, abnormal=abnormal)
+        return make_heat_map(monthdata=month_data.copy(), limit=limit, normal=normal, abnormal=abnormal)
 
     @app.callback(
         Output(component_id='health-percent', component_property='children'),
@@ -359,36 +388,77 @@ def main():
     )
     def update_health_state(threshold, n_click):
         global health_percent
-        health_percent = threshold
-        return f'설정된 건정성 판정 기준은 {health_percent}% 입니다.'
+        health_percent = threshold / 100
+        return f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
 
     @app.callback(
         Output(component_id='bar-chart1', component_property='figure'),
         Output(component_id='bar-chart2', component_property='figure'),
-        Output(component_id='line-chart', component_property='figure'),
         Input(component_id='picked-date', component_property='date'),
-        Input(component_id='hit-map', component_property='clickData'),
+        Input(component_id='heat-map', component_property='clickData'),
+        prevent_initial_call=False,
     )
-    def update_barchart(picked_date, clickData):
-        x = 0
-        y = 0
+    def update_barchart(picked_date, clickData, *args):
+        global heatmap_click_x
+        global heatmap_click_y
+
         if clickData:
-            x = clickData['points'][0]['x']
-            y = clickData['points'][0]['y']
+            heatmap_click_x = clickData['points'][0]['x']
+            heatmap_click_y = clickData['points'][0]['y']
 
         picked_date = datetime.date.fromisoformat(picked_date)
-        timestamp = time.mktime((picked_date-datetime.timedelta(days=int(x), hours=int(y))).timetuple())
+        timestamp = time.mktime((picked_date-datetime.timedelta(days=int(heatmap_click_x), hours=int(heatmap_click_y))).timetuple())
         operation_data = api_module.operation(timestamp)
+
+        return make_bar_chart1(operation_data), make_bar_chart2(operation_data)
+
+    @app.callback(
+        Output(component_id='line-chart', component_property='figure'),
+        Input(component_id='picked-date', component_property='date'),
+        Input(component_id='heat-map', component_property='clickData'),
+        Input(component_id='filter-normal', component_property='n_clicks'),
+        Input(component_id='filter-abnormal', component_property='n_clicks'),
+        Input(component_id='filter-input', component_property='n_clicks'),
+        Input(component_id='filter-location', component_property='n_clicks'),
+        Input(component_id='filter-servo', component_property='n_clicks'),
+        Input(component_id='filter-1', component_property='n_clicks'),
+        Input(component_id='filter-2', component_property='n_clicks'),
+        Input(component_id='filter-3', component_property='n_clicks'),
+        Input(component_id='filter-4', component_property='n_clicks'),
+        prevent_initial_call=False,
+    )
+    def update_barchart(picked_date, clickData, *args):
+        global heatmap_click_x
+        global heatmap_click_y
+
+        triggered_id = ctx.triggered_id
+
+        filter_dict = {0: 'normal', 1: 'abnormal', 2: 'input', 3: 'position', 4: 'servo', 5: '1', 6: '2', 7: '3', 8: '4'}
+
+        if clickData:
+            heatmap_click_x = clickData['points'][0]['x']
+            heatmap_click_y = clickData['points'][0]['y']
+
+        picked_date = datetime.date.fromisoformat(picked_date)
+        timestamp = time.mktime((picked_date-datetime.timedelta(days=int(heatmap_click_x), hours=int(heatmap_click_y))).timetuple())
         raw_data = api_module.rawdata(timestamp)
-        return make_bar_chart1(operation_data), make_bar_chart2(operation_data), make_line_chart(raw_data.copy())
+        display_list = list(raw_data.columns)
+
+        if triggered_id and 'filter' in triggered_id:
+            for i, click in enumerate(args):
+                if click and click % 2:
+                    display_list = [x for x in display_list if filter_dict[i] in x]
+
+        if 'timestamp' not in display_list: display_list.append('timestamp')
+
+        return make_line_chart(raw_data[display_list].copy())
 
     @app.callback(
         Output(component_id='test1', component_property='children'),
         Input(component_id='picked-date', component_property='date'),
-        Input(component_id='hit-map', component_property='clickData'),
+        Input(component_id='heat-map', component_property='clickData'),
     )
     def update_date(picked_date, click):
-
         return '{}, {}'.format(picked_date, click)
 
 
