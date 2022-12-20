@@ -1,5 +1,4 @@
 import time
-
 import flask
 from dash import Dash, html, dcc, Input, Output, ctx, State, dash_table
 import plotly.express as px
@@ -12,7 +11,7 @@ from datetime import date
 import datetime
 import api_module
 
-data = pd.read_csv('./fakedata.csv', index_col=0)
+data = pd.read_csv('./hour_summary_data.csv', index_col=0)
 data.index = pd.to_datetime(data.index)
 data['date'] = data.index
 data['date'] = data['date'].apply(lambda x: x.date())
@@ -22,34 +21,27 @@ month_data = data["sumData"]
 limit = 10000
 heatmap_click_x = 0
 heatmap_click_y = 0
+barchart3_click_x = 0
+heatmap_zmax = 0
+heatmap_zmin = 0
+heatmap_state = 'sumData'
+heatmap_selected_btn = 'total'
+timestamp = time.mktime(datetime.datetime.today().timetuple())
+cycletime_stamp = pd.DataFrame()
+filter_state = True
 
 filtered_data = data.copy()
 
-
-def fig_layout(fig):
-    return fig.update_layout(
-        # coloraxis_showscale=False,
-        autosize=False,
-        width=600,
-        height=70,
-        xaxis=dict(
-            showgrid=False,
-            showline=False,
-            showticklabels=False,
-            zeroline=False,
-        ),
-        yaxis=dict(
-            showgrid=False,
-            showline=False,
-            showticklabels=True,
-            zeroline=False,
-        ),
-        barmode='stack',
-        paper_bgcolor='rgb(255, 255, 255)',
-        plot_bgcolor='rgb(255, 255, 255)',
-        margin=dict(l=30, r=0, t=0, b=10),
-        showlegend=False,
-    )
+colorscale = [[0.0, "rgb(49,54,149)"],
+                    # [0.1111111111111111, "rgb(215,48,39)"],
+                    # [0.2222222222222222, "rgb(244,109,67)"],
+                    # [0.3333333333333333, "rgb(253,174,97)"],
+                    # [0.4444444444444444, "rgb(254,224,144)"],
+                    [health_percent, "rgb(224,243,248)"],
+                    # [0.6666666666666666, "rgb(171,217,233)"],
+                    # [0.7777777777777778, "rgb(116,173,209)"],
+                    # [0.8888888888888888, "rgb(69,117,180)"],
+                    [1.0, "rgb(165,0,38)"]]
 
 
 def list2matrix(data, front):
@@ -61,10 +53,16 @@ def list2matrix(data, front):
 def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
                  limit=10000, normal=False, abnormal=False):
 
+    global heatmap_zmax
+    global heatmap_zmin
+
     if normal: monthdata[monthdata < limit] = 0
     elif abnormal: monthdata[monthdata > limit] = 0
 
     monthdata = list2matrix(monthdata, front=9).copy()
+
+    heatmap_zmax = monthdata.max()
+    heatmap_zmin = monthdata.min()
 
     fig = go.Figure(data=go.Heatmap(
         z=monthdata[:, 0:31],
@@ -75,16 +73,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
         texttemplate="%{text}",
         hovertemplate="%{x}day %{y}hour  <extra></extra>",
         textfont={"size": 10},
-        colorscale=[[0.0, "rgb(49,54,149)"],
-                    # [0.1111111111111111, "rgb(215,48,39)"],
-                    # [0.2222222222222222, "rgb(244,109,67)"],
-                    # [0.3333333333333333, "rgb(253,174,97)"],
-                    # [0.4444444444444444, "rgb(254,224,144)"],
-                    [health_percent, "rgb(224,243,248)"],
-                    # [0.6666666666666666, "rgb(171,217,233)"],
-                    # [0.7777777777777778, "rgb(116,173,209)"],
-                    # [0.8888888888888888, "rgb(69,117,180)"],
-                    [1.0, "rgb(165,0,38)"]],
+        colorscale=colorscale,
     ))
 
     # fig = ff.create_annotated_heatmap(monthdata[:, 0:31], x=list(range(1, 32, 1)), y=list(range(24)),
@@ -119,7 +108,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
     return fig
 
 
-def make_bar_chart1(operation_data=api_module.operation(time.mktime(datetime.datetime.today().timetuple()))):
+def make_bar_chart1(operation_data=api_module.operation(timestamp)):
 
     fig = go.Figure()
 
@@ -150,14 +139,34 @@ def make_bar_chart1(operation_data=api_module.operation(time.mktime(datetime.dat
         showscale=False,
     ))
 
-    fig_layout(fig)
-    fig.update(layout_coloraxis_showscale=False)
-    fig.update_coloraxes(showscale=False)
+    fig.update_layout(
+        # coloraxis_showscale=False,
+        autosize=False,
+        width=600,
+        height=35,
+        xaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+            zeroline=False,
+        ),
+        yaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=True,
+            zeroline=False,
+        ),
+        barmode='stack',
+        paper_bgcolor='rgb(255, 255, 255)',
+        plot_bgcolor='rgb(255, 255, 255)',
+        margin=dict(l=30, r=0, t=0, b=10),
+        showlegend=False,
+    )
 
     return fig
 
 
-def make_bar_chart2(operation_data=api_module.operation(time.mktime(datetime.datetime.today().timetuple()))):
+def make_bar_chart2(operation_data=api_module.operation(timestamp)):
     fig = go.Figure()
 
     operation_data['diff'] = operation_data['time_to'] - operation_data['time_from']
@@ -188,13 +197,88 @@ def make_bar_chart2(operation_data=api_module.operation(time.mktime(datetime.dat
         showscale=False,
     ))
 
-    fig.update_coloraxes(showscale=False)
-    fig_layout(fig)
+    fig.update_layout(
+        # coloraxis_showscale=False,
+        autosize=False,
+        width=600,
+        height=70,
+        xaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+            zeroline=False,
+        ),
+        yaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=True,
+            zeroline=False,
+        ),
+        barmode='stack',
+        paper_bgcolor='rgb(255, 255, 255)',
+        plot_bgcolor='rgb(255, 255, 255)',
+        margin=dict(l=30, r=0, t=0, b=10),
+        showlegend=False,
+    )
 
     return fig
 
 
-def make_line_chart(raw_data=api_module.rawdata(time.mktime(datetime.datetime.today().timetuple()))):
+def make_bar_chart3(health_data=api_module.min_data(timestamp)):
+    global cycletime_stamp
+
+    fig = go.Figure()
+
+    color_data = [0 for x in range(60)]
+
+    y_data = ['건강도']
+
+    if 'best_to' not in health_data.index and 'best_from' not in health_data.index:
+        health_data['best_to'] = health_data['timeto']
+        health_data['best_from'] = health_data['timefrom']
+
+    cycletime_stamp = health_data[['timeto', 'timefrom', 'best_to', 'best_from']]
+
+    for i, value in enumerate(health_data[heatmap_state]):
+        color_data[i] = health_data[heatmap_state].iloc[i]
+
+    fig.add_trace(go.Heatmap(
+        z=[color_data],
+        y=y_data,
+        colorscale=colorscale,
+        zmax=heatmap_zmax,
+        zmin=heatmap_zmin,
+        showscale=False,
+    ))
+
+    fig.update_layout(
+        # coloraxis_showscale=False,
+        autosize=False,
+        width=600,
+        height=70,
+        xaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=False,
+            zeroline=False,
+        ),
+        yaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=True,
+            zeroline=False,
+        ),
+        barmode='stack',
+        paper_bgcolor='rgb(255, 255, 255)',
+        plot_bgcolor='rgb(255, 255, 255)',
+        margin=dict(l=30, r=0, t=0, b=10),
+        showlegend=False,
+    )
+
+    return fig
+
+
+def make_line_chart(raw_data=api_module.rawdata(timestamp, timestamp+60*60)):
 
     if raw_data.empty:
         fig = px.line()
@@ -265,8 +349,8 @@ def render_main():
         )
 
     def heat_map():
-        fig = make_heat_map()
-        return dcc.Graph(id='heat-map', figure=fig)
+        # fig = make_heat_map()
+        return dcc.Graph(id='heat-map')
 
     def threshold_button_set():
         return html.Div(
@@ -309,31 +393,33 @@ def render_main():
 def render_detail():
 
     def bar_chart():
-        fig1 = make_bar_chart1()
-        fig2 = make_bar_chart2()
+        # fig1 = make_bar_chart1()
+        # fig2 = make_bar_chart2()
+        # fig3 = make_bar_chart3()
 
         return html.Div(
-            children=[dcc.Graph(id='bar-chart1', figure=fig1),
-                      dcc.Graph(id='bar-chart2', figure=fig2)]
+            children=[dcc.Graph(id='bar-chart1'),
+                      dcc.Graph(id='bar-chart2'),
+                      dcc.Graph(id='bar-chart3')]
         )
 
     def linechart():
-        fig = make_line_chart()
-        return dcc.Graph(id='line-chart', figure=fig)
+        # fig = make_line_chart()
+        return dcc.Graph(id='line-chart')
 
     def filter_button_set():
         return html.Div(
             children=[
                 html.H3('필터 :'),
-                html.Button(id='filter-normal', children='정상', className='button'),
-                html.Button(id='filter-abnormal', children='불량', className='button'),
-                html.Button(id='filter-input', children='입력', className='button'),
-                html.Button(id='filter-location', children='위치', className='button'),
-                html.Button(id='filter-servo', children='서보', className='button'),
-                html.Button(id='filter-1', children='1번', className='button'),
-                html.Button(id='filter-2', children='2번', className='button'),
-                html.Button(id='filter-3', children='3번', className='button'),
-                html.Button(id='filter-4', children='4번', className='button'),
+                html.Button(id='filter-normal', children='정상', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-abnormal', children='불량', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-input', children='입력', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-location', children='위치', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-servo', children='서보', className='button', n_clicks=1, style={'margin-left': '5%'}),
+                html.Button(id='filter-1', children='1번', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-2', children='2번', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-3', children='3번', className='button', n_clicks=0, style={'margin-left': '5%'}),
+                html.Button(id='filter-4', children='4번', className='button', n_clicks=0, style={'margin-left': '5%'}),
             ]
         )
 
@@ -343,6 +429,7 @@ def render_detail():
                         bar_chart(),
                         linechart(),
                         filter_button_set(),
+                        html.Div(id='test')
                     ])
 
 
@@ -353,6 +440,9 @@ def main():
 
     @app.callback(
         Output(component_id='heat-map', component_property='figure'),
+        Output(component_id='cyclic', component_property='style'),
+        Output(component_id='conti', component_property='style'),
+        Output(component_id='total', component_property='style'),
         Input(component_id='picked-date', component_property='date'),
         Input(component_id='cyclic', component_property='n_clicks'),
         Input(component_id='conti', component_property='n_clicks'),
@@ -360,7 +450,7 @@ def main():
         Input(component_id='apply', component_property='n_clicks'),
         # Input(component_id='normal', component_property='n_clicks'),
         # Input(component_id='abnormal', component_property='n_clicks'),
-        prevent_initial_call=True,
+        prevent_initial_call=False,
     )
     def update_chart(picked_date, *args):
         global data
@@ -368,6 +458,8 @@ def main():
         global month_data
         global limit
         global filtered_data
+        global heatmap_state
+        global heatmap_selected_btn
 
         normal = False
         abnormal = False
@@ -377,20 +469,33 @@ def main():
                              (data['date'] - picked_date <= datetime.timedelta(0))]
 
         triggered_id = ctx.triggered_id
+
+        style_list = [{}, {}, {}]
+        location = {'cyclic': 0, 'conti': 1, 'total': 2}
+
         if triggered_id == 'cyclic':
             month_data = filtered_data["cycleIndex"]
+            heatmap_state = "cycleIndex"
+            heatmap_selected_btn = 'cyclic'
             limit = filtered_data["cycleIndex"].loc[filtered_data["cycleIndex"] > 0].quantile(health_percent/100)
         elif triggered_id == 'conti':
             month_data = filtered_data["contiIndex"]
+            heatmap_state = "contiIndex"
+            heatmap_selected_btn = 'conti'
             limit = filtered_data["contiIndex"].loc[filtered_data["contiIndex"] > 0].quantile(health_percent/100)
         elif triggered_id == 'total':
             month_data = filtered_data["sumData"]
+            heatmap_state = "sumData"
+            heatmap_selected_btn = 'total'
             limit = filtered_data["sumData"].loc[filtered_data["sumData"] > 0].quantile(health_percent/100)
         elif triggered_id == 'normal':
             normal = True
         elif triggered_id == 'abnormal':
             abnormal = True
-        return make_heat_map(monthdata=month_data.copy(), limit=limit, normal=normal, abnormal=abnormal)
+
+        style_list[location[heatmap_selected_btn]] = {'border-bottom': ' solid', 'border-bottom-color': '#000000'}
+
+        return make_heat_map(monthdata=month_data.copy(), limit=limit, normal=normal, abnormal=abnormal), *style_list
 
     @app.callback(
         Output(component_id='health-percent', component_property='children'),
@@ -405,6 +510,7 @@ def main():
     @app.callback(
         Output(component_id='bar-chart1', component_property='figure'),
         Output(component_id='bar-chart2', component_property='figure'),
+        Output(component_id='bar-chart3', component_property='figure'),
         Input(component_id='picked-date', component_property='date'),
         Input(component_id='heat-map', component_property='clickData'),
         prevent_initial_call=False,
@@ -412,6 +518,7 @@ def main():
     def update_barchart(picked_date, clickData, *args):
         global heatmap_click_x
         global heatmap_click_y
+        global timestamp
 
         if clickData:
             heatmap_click_x = clickData['points'][0]['x']
@@ -420,13 +527,23 @@ def main():
         picked_date = datetime.date.fromisoformat(picked_date)
         timestamp = time.mktime((picked_date-datetime.timedelta(days=int(heatmap_click_x), hours=int(heatmap_click_y))).timetuple())
         operation_data = api_module.operation(timestamp)
+        min_data = api_module.min_data(timestamp)
 
-        return make_bar_chart1(operation_data), make_bar_chart2(operation_data)
+        return make_bar_chart1(operation_data), make_bar_chart2(operation_data), make_bar_chart3(min_data)
 
     @app.callback(
         Output(component_id='line-chart', component_property='figure'),
-        Input(component_id='picked-date', component_property='date'),
-        Input(component_id='heat-map', component_property='clickData'),
+        Output(component_id='filter-normal', component_property='style'),
+        Output(component_id='filter-abnormal', component_property='style'),
+        Output(component_id='filter-input', component_property='style'),
+        Output(component_id='filter-location', component_property='style'),
+        Output(component_id='filter-servo', component_property='style'),
+        Output(component_id='filter-1', component_property='style'),
+        Output(component_id='filter-2', component_property='style'),
+        Output(component_id='filter-3', component_property='style'),
+        Output(component_id='filter-4', component_property='style'),
+        Input(component_id='bar-chart3', component_property='clickData'),
+        Input(component_id='bar-chart3', component_property='figure'),
         Input(component_id='filter-normal', component_property='n_clicks'),
         Input(component_id='filter-abnormal', component_property='n_clicks'),
         Input(component_id='filter-input', component_property='n_clicks'),
@@ -438,31 +555,57 @@ def main():
         Input(component_id='filter-4', component_property='n_clicks'),
         prevent_initial_call=False,
     )
-    def update_barchart(picked_date, clickData, *args):
-        global heatmap_click_x
-        global heatmap_click_y
+    def update_linechart(clickData, fig, *args):
+        global filter_state
+        global cycletime_stamp
+        global barchart3_click_x
 
         triggered_id = ctx.triggered_id
 
         filter_dict = {0: 'normal', 1: 'abnormal', 2: 'input', 3: 'position', 4: 'servo', 5: '1', 6: '2', 7: '3', 8: '4'}
+        btn_state_list = [{} for i in range(len(args))]
 
         if clickData:
-            heatmap_click_x = clickData['points'][0]['x']
-            heatmap_click_y = clickData['points'][0]['y']
+            barchart3_click_x = clickData['points'][0]['x']
 
-        picked_date = datetime.date.fromisoformat(picked_date)
-        timestamp = time.mktime((picked_date-datetime.timedelta(days=int(heatmap_click_x), hours=int(heatmap_click_y))).timetuple())
-        raw_data = api_module.rawdata(timestamp)
+        if triggered_id == 'filter-normal':filter_state=True
+        elif triggered_id == 'filter-abnormal':filter_state=False
+
+        if filter_state:
+            time_from = 'timefrom'
+            time_to = 'timeto'
+        else:
+            time_from = 'best_from'
+            time_to = 'best_to'
+
+        if not cycletime_stamp.empty:
+            raw_data = api_module.rawdata(cycletime_stamp.iloc[barchart3_click_x][time_from], cycletime_stamp.iloc[barchart3_click_x][time_to])
+        else:
+            time_now = time.mktime(datetime.datetime.today().timetuple())
+            raw_data = api_module.rawdata(time_now-3600, time_now)
         display_list = list(raw_data.columns)
 
-        if triggered_id and 'filter' in triggered_id:
-            for i, click in enumerate(args):
-                if click and click % 2:
-                    display_list = [x for x in display_list if filter_dict[i] in x]
+        # if triggered_id and 'filter' in triggered_id:
+        for i, click in enumerate(args):
+            if click % 2:
+                display_list = [x for x in display_list if filter_dict[i] in x]
+                btn_state_list[i] = {'border-bottom': ' solid', 'border-bottom-color': '#000000'}
 
         if 'timestamp' not in display_list: display_list.append('timestamp')
 
-        return make_line_chart(raw_data[display_list].copy())
+        return make_line_chart(raw_data[display_list].copy()), *btn_state_list
+
+    # @app.callback(
+    #     Output(component_id='test', component_property='children'),
+    #     Input(component_id='bar-chart3', component_property='clickData')
+    # )
+    # def test(c):
+    #     asdf='timeto'
+    #     a = cycletime_stamp.iloc[c['points'][0]['x']][asdf]
+    #     b = cycletime_stamp.iloc[c['points'][0]['x']]['timefrom']
+    #     c = a-b
+    #
+    #     return '{}'.format(cycletime_stamp)
 
 
 if __name__ == '__main__':
