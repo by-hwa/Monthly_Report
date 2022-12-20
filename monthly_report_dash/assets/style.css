@@ -20,7 +20,9 @@ html{
 }
 
 .button:hover{
-    background-color: #00ffff;
+    /*background-color: #00ffff;*/
+    border-bottom: solid;
+    border-bottom-color: #000000;
 }
 
 .button:active{

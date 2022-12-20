@@ -28,9 +28,10 @@ filtered_data = data.copy()
 
 def fig_layout(fig):
     return fig.update_layout(
+        # coloraxis_showscale=False,
         autosize=False,
         width=600,
-        height=100,
+        height=70,
         xaxis=dict(
             showgrid=False,
             showline=False,
@@ -46,7 +47,7 @@ def fig_layout(fig):
         barmode='stack',
         paper_bgcolor='rgb(255, 255, 255)',
         plot_bgcolor='rgb(255, 255, 255)',
-        margin=dict(l=30, r=0, t=0, b=0),
+        margin=dict(l=30, r=0, t=0, b=10),
         showlegend=False,
     )
 
@@ -74,7 +75,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
         texttemplate="%{text}",
         hovertemplate="%{x}day %{y}hour  <extra></extra>",
         textfont={"size": 10},
-        colorscale=[[0.0, "rgb(165,0,38)"],
+        colorscale=[[0.0, "rgb(49,54,149)"],
                     # [0.1111111111111111, "rgb(215,48,39)"],
                     # [0.2222222222222222, "rgb(244,109,67)"],
                     # [0.3333333333333333, "rgb(253,174,97)"],
@@ -83,7 +84,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
                     # [0.6666666666666666, "rgb(171,217,233)"],
                     # [0.7777777777777778, "rgb(116,173,209)"],
                     # [0.8888888888888888, "rgb(69,117,180)"],
-                    [1.0, "rgb(49,54,149)"]],
+                    [1.0, "rgb(165,0,38)"]],
     ))
 
     # fig = ff.create_annotated_heatmap(monthdata[:, 0:31], x=list(range(1, 32, 1)), y=list(range(24)),
@@ -94,7 +95,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
 
     fig.update_layout(
         # title='GitHub commits per day',
-        xaxis_nticks=36,
+        # xaxis_nticks=36,
         autosize=False,
         width=800,
         height=500,
@@ -119,6 +120,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
 
 
 def make_bar_chart1(operation_data=api_module.operation(time.mktime(datetime.datetime.today().timetuple()))):
+
     fig = go.Figure()
 
     operation_data['diff'] = operation_data['time_to'] - operation_data['time_from']
@@ -128,24 +130,29 @@ def make_bar_chart1(operation_data=api_module.operation(time.mktime(datetime.dat
     run_color = {0: "black", 1: "cornsilk", 2: "aqua", 3: "lightseagreen", 4: "coral", 5: "teal"}
     color_data = [0 for x in range(60)]
 
-    x_data = [0 for x in range(60)]
     y_data = ['운영']
 
+    colorscale = [[0.0, "rgb(0,0,0)"],
+                  [0.2, "rgb(215,48,39)"],
+                  [0.4, "rgb(244,109,67)"],
+                  [0.6, "rgb(253,174,97)"],
+                  [0.8, "rgb(254,224,144)"],
+                  [1.0, "rgb(224,243,248)"]]
+
     for i, value in enumerate(state_data['diff']):
-        x_data[i] = value//60
         color_data[i] = state_data['flag'].iloc[i]
 
-    for i, xd in enumerate(x_data):
-        fig.add_trace(go.Bar(
-            x=[xd], y=y_data,
-            orientation='h',
-            marker=dict(
-                color=run_color[color_data[i]],
-                line=dict(color='rgb(248, 248, 249)', width=0)
-            ))
-        )
+    fig.add_trace(go.Heatmap(
+        z=[color_data],
+        y=y_data,
+        colorscale=colorscale,
+        hoverinfo='none',
+        showscale=False,
+    ))
 
     fig_layout(fig)
+    fig.update(layout_coloraxis_showscale=False)
+    fig.update_coloraxes(showscale=False)
 
     return fig
 
@@ -161,23 +168,27 @@ def make_bar_chart2(operation_data=api_module.operation(time.mktime(datetime.dat
 
     color_data = [0 for x in range(60)]
 
-    x_data = [0 for x in range(60)]
     y_data = ['모델']
 
+    colorscale = [[0.0, "rgb(0,0,0)"],
+                  [0.2, "rgb(215,48,39)"],
+                  [0.4, "rgb(244,109,67)"],
+                  [0.6, "rgb(253,174,97)"],
+                  [0.8, "rgb(254,224,144)"],
+                  [1.0, "rgb(224,243,248)"]]
+
     for i, value in enumerate(model_data['diff']):
-        x_data[i] = value//60
         color_data[i] = model_data['flag'].iloc[i]
 
-    for i, xd in enumerate(x_data):
-        fig.add_trace(go.Bar(
-            x=[xd], y=y_data,
-            orientation='h',
-            marker=dict(
-                color=f'rgba({255*(color_data[i]//100)},{255*(color_data[i]//100)},{255*(color_data[i]//100)},0.8)',
-                line=dict(color='rgb(248, 248, 249)', width=0)
-            ))
-        )
+    fig.add_trace(go.Heatmap(
+        z=[color_data],
+        y=y_data,
+        colorscale=colorscale,
+        hoverinfo='none',
+        showscale=False,
+    ))
 
+    fig.update_coloraxes(showscale=False)
     fig_layout(fig)
 
     return fig
@@ -188,6 +199,8 @@ def make_line_chart(raw_data=api_module.rawdata(time.mktime(datetime.datetime.to
     if raw_data.empty:
         fig = px.line()
         return fig
+
+    raw_data['timestamp'] = raw_data['timestamp'].apply(lambda x: datetime.datetime.fromtimestamp(x))
 
     fig = px.line(raw_data, x='timestamp', y=list(raw_data.columns))
     fig.update_layout(
@@ -330,8 +343,6 @@ def render_detail():
                         bar_chart(),
                         linechart(),
                         filter_button_set(),
-                        html.Div(id='test'),
-                        html.Div(id='test1')
                     ])
 
 
@@ -452,14 +463,6 @@ def main():
         if 'timestamp' not in display_list: display_list.append('timestamp')
 
         return make_line_chart(raw_data[display_list].copy())
-
-    @app.callback(
-        Output(component_id='test1', component_property='children'),
-        Input(component_id='picked-date', component_property='date'),
-        Input(component_id='heat-map', component_property='clickData'),
-    )
-    def update_date(picked_date, click):
-        return '{}, {}'.format(picked_date, click)
 
 
 if __name__ == '__main__':
