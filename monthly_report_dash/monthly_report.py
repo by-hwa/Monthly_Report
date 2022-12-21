@@ -19,7 +19,7 @@ data["sumData"] = data["cycleIndex"]+data["contiIndex"]
 health_percent = 0.5
 month_data = data["sumData"]
 limit = 10000
-heatmap_click_x = 0
+heatmap_click_x = '0/0/0'
 heatmap_click_y = 0
 barchart3_click_x = 0
 heatmap_zmax = 0
@@ -57,7 +57,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"], date=data['
     global colorscale
 
     monthdata = list2matrix(monthdata, front=9).copy()
-    date_list = list(map(lambda x: f'{x.month}/{x.day}', date.unique()))
+    date_list = list(map(lambda x: f'{x.year%100}/{x.month}/{x.day}', date.unique()))
 
     heatmap_zmax = monthdata.max()
     heatmap_zmin = monthdata.min()
@@ -69,7 +69,7 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"], date=data['
         text=monthdata[:, 0:31],
         xgap=1, ygap=1,
         texttemplate="%{text}",
-        hovertemplate="%{x}day %{y}hour  <extra></extra>",
+        hovertemplate="%{x} %{y}:00 ~ +1h  <extra></extra>",
         textfont={"size": 10},
         colorscale=colorscale,
     ))
@@ -440,18 +440,6 @@ def main():
         children=[render_main(), render_detail()],)
 
     @app.callback(
-        Output(component_id='health-percent', component_property='children'),
-        State(component_id='threshold', component_property='value'),
-        Input(component_id='apply', component_property='n_clicks'),
-    )
-    def update_health_state(threshold, n_click):
-        global health_percent
-        global colorscale
-        colorscale[1] = [health_percent, "rgb(224,243,248)"]
-        health_percent = threshold / 100
-        return f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
-
-    @app.callback(
         Output(component_id='heat-map', component_property='figure'),
         Output(component_id='cyclic', component_property='style'),
         Output(component_id='conti', component_property='style'),
@@ -503,6 +491,18 @@ def main():
         return make_heat_map(monthdata=month_data.copy(), date=filtered_data['date'].copy()), *style_list
 
     @app.callback(
+        Output(component_id='health-percent', component_property='children'),
+        State(component_id='threshold', component_property='value'),
+        Input(component_id='apply', component_property='n_clicks'),
+    )
+    def update_health_state(threshold, n_click):
+        global health_percent
+        global colorscale
+        colorscale[1] = [health_percent, "rgb(224,243,248)"]
+        health_percent = threshold / 100
+        return f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
+
+    @app.callback(
         Output(component_id='bar-chart1', component_property='figure'),
         Output(component_id='bar-chart2', component_property='figure'),
         Output(component_id='bar-chart3', component_property='figure'),
@@ -519,8 +519,16 @@ def main():
             heatmap_click_x = clickData['points'][0]['x']
             heatmap_click_y = clickData['points'][0]['y']
 
+        y, m, d = map(int, heatmap_click_x.split('/'))
+
         picked_date = datetime.date.fromisoformat(picked_date)
-        timestamp = time.mktime((picked_date-datetime.timedelta(days=int(heatmap_click_x), hours=int(heatmap_click_y))).timetuple())
+        # timestamp = time.mktime((picked_date-datetime.timedelta(days=int(heatmap_click_x), hours=int(heatmap_click_y))).timetuple())
+
+        if heatmap_click_x == '0/0/0':
+            timestamp = time.mktime(picked_date.timetuple())
+        else:
+            timestamp = time.mktime(datetime.datetime(year=(2000+y), month=m, day=d, hour=int(heatmap_click_y)).timetuple())
+            print(timestamp)
         operation_data = api_module.operation(timestamp)
         min_data = api_module.min_data(timestamp)
 
