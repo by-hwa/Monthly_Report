@@ -4,6 +4,8 @@
 
 2. [Dash version](#dash)
 
+3. [Monthly report prototype](#monthly-report-prototype)
+
 ## Streamlit
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 49 24" src="https://user-images.githubusercontent.com/102535447/205242814-e420b949-663e-432f-b93c-1628888462ce.png">
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 49 55" src="https://user-images.githubusercontent.com/102535447/205242819-a5041875-f4a0-4f25-984e-b40e1a34dbb3.png">
@@ -15,3 +17,6 @@
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 53 48" src="https://user-images.githubusercontent.com/102535447/205243568-424c7244-3896-4c03-af80-7dcac9963325.png">
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 54 06" src="https://user-images.githubusercontent.com/102535447/205243573-9a984b97-9320-4855-b1ef-4e4f6afb3b7d.png">
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 54 44" src="https://user-images.githubusercontent.com/102535447/205243593-f13352c3-1fb7-4518-89b9-1ffd242df96b.png">
+
+## Monthly report prototype
+<img width="1624" alt="스크린샷 2022-12-21 오전 11 03 00" src="https://user-images.githubusercontent.com/102535447/208803165-0dcbd75a-b6f0-41f7-ad70-3cf57774670a.png">
