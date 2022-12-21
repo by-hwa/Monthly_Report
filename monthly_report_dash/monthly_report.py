@@ -233,7 +233,7 @@ def make_bar_chart3(health_data=api_module.min_data(timestamp)):
 
     y_data = ['건강도']
 
-    if 'best_to' not in health_data.index and 'best_from' not in health_data.index:
+    if 'best_to' not in health_data.columns and 'best_from' not in health_data.columns:
         health_data['best_to'] = health_data['timeto']
         health_data['best_from'] = health_data['timefrom']
 
@@ -245,6 +245,7 @@ def make_bar_chart3(health_data=api_module.min_data(timestamp)):
     fig.add_trace(go.Heatmap(
         z=[color_data],
         y=y_data,
+        hovertemplate="%{x}min %{z}health",
         colorscale=colorscale,
         zmax=heatmap_zmax,
         zmin=heatmap_zmin,
@@ -579,6 +580,7 @@ def main():
             time_to = 'best_to'
 
         if not cycletime_stamp.empty:
+            print(cycletime_stamp.iloc[barchart3_click_x].apply(lambda x : '%f' % x))
             raw_data = api_module.rawdata(cycletime_stamp.iloc[barchart3_click_x][time_from], cycletime_stamp.iloc[barchart3_click_x][time_to])
         else:
             time_now = time.mktime(datetime.datetime.today().timetuple())
@@ -588,6 +590,7 @@ def main():
         # if triggered_id and 'filter' in triggered_id:
         for i, click in enumerate(args):
             if click % 2:
+                if filter_dict[i] == 'normal' or filter_dict[i] == 'abnormal':continue
                 display_list = [x for x in display_list if filter_dict[i] in x]
                 btn_state_list[i] = {'border-bottom': ' solid', 'border-bottom-color': '#000000'}
 
