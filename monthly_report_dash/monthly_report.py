@@ -50,23 +50,21 @@ def list2matrix(data, front):
     return matrix.astype(int)
 
 
-def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
-                 limit=10000, normal=False, abnormal=False):
+def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"], date=data['date']):
 
     global heatmap_zmax
     global heatmap_zmin
-
-    if normal: monthdata[monthdata < limit] = 0
-    elif abnormal: monthdata[monthdata > limit] = 0
+    global colorscale
 
     monthdata = list2matrix(monthdata, front=9).copy()
+    date_list = list(map(lambda x: f'{x.month}/{x.day}', date.unique()))
 
     heatmap_zmax = monthdata.max()
     heatmap_zmin = monthdata.min()
 
     fig = go.Figure(data=go.Heatmap(
-        z=monthdata[:, 0:31],
-        x=list(range(1, 32, 1)),
+        z=monthdata,
+        x=date_list,
         y=list(range(24)),
         text=monthdata[:, 0:31],
         xgap=1, ygap=1,
@@ -76,11 +74,8 @@ def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"],
         colorscale=colorscale,
     ))
 
-    # fig = ff.create_annotated_heatmap(monthdata[:, 0:31], x=list(range(1, 32, 1)), y=list(range(24)),
-    #                                   annotation_text=monthdata[:, 0:31], colorscale='phase', xgap=1, ygap=1)
     fig.update_layout(margin=dict(t=2, r=2, b=2, l=2), width=1400, height=700, xaxis=dict(showgrid=False),
                       yaxis=dict(autorange="reversed", showgrid=False), yaxis_title="Hour", xaxis_title="Day")
-    # fig.data[0].hovertemplate = "%{x}day %{y}hour  <extra></extra>"
 
     fig.update_layout(
         # title='GitHub commits per day',
@@ -134,6 +129,8 @@ def make_bar_chart1(operation_data=api_module.operation(timestamp)):
     fig.add_trace(go.Heatmap(
         z=[color_data],
         y=y_data,
+        zmax=5,
+        zmin=0,
         colorscale=colorscale,
         hoverinfo='none',
         showscale=False,
@@ -192,6 +189,8 @@ def make_bar_chart2(operation_data=api_module.operation(timestamp)):
     fig.add_trace(go.Heatmap(
         z=[color_data],
         y=y_data,
+        zmax=100,
+        zmin=0,
         colorscale=colorscale,
         hoverinfo='none',
         showscale=False,
@@ -226,6 +225,7 @@ def make_bar_chart2(operation_data=api_module.operation(timestamp)):
 
 def make_bar_chart3(health_data=api_module.min_data(timestamp)):
     global cycletime_stamp
+    global colorscale
 
     fig = go.Figure()
 
@@ -440,6 +440,18 @@ def main():
         children=[render_main(), render_detail()],)
 
     @app.callback(
+        Output(component_id='health-percent', component_property='children'),
+        State(component_id='threshold', component_property='value'),
+        Input(component_id='apply', component_property='n_clicks'),
+    )
+    def update_health_state(threshold, n_click):
+        global health_percent
+        global colorscale
+        colorscale[1] = [health_percent, "rgb(224,243,248)"]
+        health_percent = threshold / 100
+        return f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
+
+    @app.callback(
         Output(component_id='heat-map', component_property='figure'),
         Output(component_id='cyclic', component_property='style'),
         Output(component_id='conti', component_property='style'),
@@ -449,8 +461,6 @@ def main():
         Input(component_id='conti', component_property='n_clicks'),
         Input(component_id='total', component_property='n_clicks'),
         Input(component_id='apply', component_property='n_clicks'),
-        # Input(component_id='normal', component_property='n_clicks'),
-        # Input(component_id='abnormal', component_property='n_clicks'),
         prevent_initial_call=False,
     )
     def update_chart(picked_date, *args):
@@ -462,12 +472,11 @@ def main():
         global heatmap_state
         global heatmap_selected_btn
 
-        normal = False
-        abnormal = False
-
         picked_date = datetime.date.fromisoformat(picked_date)
         filtered_data = data[(data['date'] - picked_date > datetime.timedelta(-31)) &
                              (data['date'] - picked_date <= datetime.timedelta(0))]
+
+        print(filtered_data)
 
         triggered_id = ctx.triggered_id
 
@@ -475,38 +484,23 @@ def main():
         location = {'cyclic': 0, 'conti': 1, 'total': 2}
 
         if triggered_id == 'cyclic':
-            month_data = filtered_data["cycleIndex"]
             heatmap_state = "cycleIndex"
             heatmap_selected_btn = 'cyclic'
             limit = filtered_data["cycleIndex"].loc[filtered_data["cycleIndex"] > 0].quantile(health_percent/100)
         elif triggered_id == 'conti':
-            month_data = filtered_data["contiIndex"]
             heatmap_state = "contiIndex"
             heatmap_selected_btn = 'conti'
             limit = filtered_data["contiIndex"].loc[filtered_data["contiIndex"] > 0].quantile(health_percent/100)
         elif triggered_id == 'total':
-            month_data = filtered_data["sumData"]
             heatmap_state = "sumData"
             heatmap_selected_btn = 'total'
             limit = filtered_data["sumData"].loc[filtered_data["sumData"] > 0].quantile(health_percent/100)
-        elif triggered_id == 'normal':
-            normal = True
-        elif triggered_id == 'abnormal':
-            abnormal = True
+
+        month_data = filtered_data[heatmap_state]
 
         style_list[location[heatmap_selected_btn]] = {'border-bottom': ' solid', 'border-bottom-color': '#000000'}
 
-        return make_heat_map(monthdata=month_data.copy(), limit=limit, normal=normal, abnormal=abnormal), *style_list
-
-    @app.callback(
-        Output(component_id='health-percent', component_property='children'),
-        State(component_id='threshold', component_property='value'),
-        Input(component_id='apply', component_property='n_clicks'),
-    )
-    def update_health_state(threshold, n_click):
-        global health_percent
-        health_percent = threshold / 100
-        return f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
+        return make_heat_map(monthdata=month_data.copy(), date=filtered_data['date'].copy()), *style_list
 
     @app.callback(
         Output(component_id='bar-chart1', component_property='figure'),
@@ -580,7 +574,6 @@ def main():
             time_to = 'best_to'
 
         if not cycletime_stamp.empty:
-            print(cycletime_stamp.iloc[barchart3_click_x].apply(lambda x : '%f' % x))
             raw_data = api_module.rawdata(cycletime_stamp.iloc[barchart3_click_x][time_from], cycletime_stamp.iloc[barchart3_click_x][time_to])
         else:
             time_now = time.mktime(datetime.datetime.today().timetuple())
