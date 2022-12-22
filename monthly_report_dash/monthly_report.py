@@ -107,30 +107,35 @@ def make_bar_chart1(operation_data=api_module.operation(timestamp)):
     fig = go.Figure()
 
     operation_data['diff'] = operation_data['time_to'] - operation_data['time_from']
+    min_value = operation_data['diff'][operation_data['diff'] > 0].min()
+    operation_data['diff'] = round((operation_data['time_to'] - operation_data['time_from']) / min_value).apply(int)
 
     state_data = operation_data[operation_data['type'] == 'state']
 
     run_color = {0: "black", 1: "cornsilk", 2: "aqua", 3: "lightseagreen", 4: "coral", 5: "teal"}
-    color_data = [0 for x in range(60)]
+    color_data = list()
 
     y_data = ['운영']
 
-    colorscale = [[0.0, "rgb(0,0,0)"],
+    colorscale1 = [[0.0, "rgb(0,0,0)"],
                   [0.2, "rgb(215,48,39)"],
                   [0.4, "rgb(244,109,67)"],
                   [0.6, "rgb(253,174,97)"],
                   [0.8, "rgb(254,224,144)"],
                   [1.0, "rgb(224,243,248)"]]
 
+    print(state_data)
+
     for i, value in enumerate(state_data['diff']):
-        color_data[i] = state_data['flag'].iloc[i]
+        if value<=0:continue
+        color_data += [state_data['flag'].iloc[i] for x in range(value)]
 
     fig.add_trace(go.Heatmap(
         z=[color_data],
         y=y_data,
         zmax=5,
         zmin=0,
-        colorscale=colorscale,
+        colorscale=colorscale1,
         hoverinfo='none',
         showscale=False,
     ))
@@ -163,19 +168,22 @@ def make_bar_chart1(operation_data=api_module.operation(timestamp)):
 
 
 def make_bar_chart2(operation_data=api_module.operation(timestamp)):
+
     fig = go.Figure()
 
     operation_data['diff'] = operation_data['time_to'] - operation_data['time_from']
+    min_value = operation_data['diff'][operation_data['diff'] > 0].min()
+    operation_data['diff'] = round((operation_data['time_to'] - operation_data['time_from']) / min_value).apply(int)
 
     model_data = operation_data[operation_data['type'] == 'model']
 
     # run_color = {0: "black", 1: "cornsilk", 2: "aqua", 3: "lightseagreen", 4: "coral", 5: "teal"}
 
-    color_data = [0 for x in range(60)]
+    color_data = list()
 
     y_data = ['모델']
 
-    colorscale = [[0.0, "rgb(0,0,0)"],
+    colorscale2 = [[0.0, "rgb(0,0,0)"],
                   [0.2, "rgb(215,48,39)"],
                   [0.4, "rgb(244,109,67)"],
                   [0.6, "rgb(253,174,97)"],
@@ -183,14 +191,17 @@ def make_bar_chart2(operation_data=api_module.operation(timestamp)):
                   [1.0, "rgb(224,243,248)"]]
 
     for i, value in enumerate(model_data['diff']):
-        color_data[i] = model_data['flag'].iloc[i]
+        if value <= 0: continue
+        color_data += [model_data['flag'].iloc[i] for x in range(value)]
+
+    if not color_data:color_data.append(0)
 
     fig.add_trace(go.Heatmap(
         z=[color_data],
         y=y_data,
         zmax=100,
         zmin=0,
-        colorscale=colorscale,
+        colorscale=colorscale2,
         hoverinfo='none',
         showscale=False,
     ))
@@ -501,6 +512,7 @@ def main():
         Output(component_id='bar-chart3', component_property='figure'),
         Input(component_id='picked-date', component_property='date'),
         Input(component_id='heat-map', component_property='clickData'),
+        Input(component_id='apply', component_property='n_clicks'),
         prevent_initial_call=False,
     )
     def update_barchart(picked_date, clickData, *args):
