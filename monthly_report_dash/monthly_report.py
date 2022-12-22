@@ -28,7 +28,6 @@ heatmap_state = 'sumData'
 heatmap_selected_btn = 'total'
 timestamp = time.mktime(datetime.datetime.today().timetuple())
 cycletime_stamp = pd.DataFrame()
-filter_state = True
 
 filtered_data = data.copy()
 
@@ -570,24 +569,19 @@ def main():
 
         triggered_id = ctx.triggered_id
 
-        filter_dict = {0: 'normal', 1: 'abnormal', 2: 'input', 3: 'position', 4: 'servo', 5: '1', 6: '2', 7: '3', 8: '4'}
+        filter_dict = {0: '_normal', 1: 'abnormal', 2: 'input', 3: 'position', 4: 'servo', 5: '1', 6: '2', 7: '3', 8: '4'}
         btn_state_list = [{} for i in range(len(args))]
 
         if clickData:
             barchart3_click_x = clickData['points'][0]['x']
 
-        if triggered_id == 'filter-normal':filter_state=True
-        elif triggered_id == 'filter-abnormal':filter_state=False
-
-        if filter_state:
-            time_from = 'timefrom'
-            time_to = 'timeto'
-        else:
-            time_from = 'best_from'
-            time_to = 'best_to'
-
         if not cycletime_stamp.empty:
-            raw_data = api_module.rawdata(cycletime_stamp.iloc[barchart3_click_x][time_from], cycletime_stamp.iloc[barchart3_click_x][time_to])
+            raw_data1 = api_module.rawdata(cycletime_stamp.iloc[barchart3_click_x]['timefrom'], cycletime_stamp.iloc[barchart3_click_x]['timeto'])
+            raw_data2 = api_module.rawdata(cycletime_stamp.iloc[barchart3_click_x]['best_from'], cycletime_stamp.iloc[barchart3_click_x]['best_to'])
+            raw_data2.drop('timestamp', axis=1, inplace=True, errors='ignore')
+            raw_data1.columns = list(map(lambda x: x + '_normal' if not x == 'timestamp' else x, raw_data1.columns))
+            raw_data2.columns = list(map(lambda x: x + '_abnormal', raw_data2.columns))
+            raw_data = pd.concat([raw_data1, raw_data2], axis=1)
         else:
             time_now = time.mktime(datetime.datetime.today().timetuple())
             raw_data = api_module.rawdata(time_now-3600, time_now)
@@ -596,9 +590,9 @@ def main():
         # if triggered_id and 'filter' in triggered_id:
         for i, click in enumerate(args):
             if click % 2:
-                if filter_dict[i] == 'normal' or filter_dict[i] == 'abnormal':continue
-                display_list = [x for x in display_list if filter_dict[i] in x]
                 btn_state_list[i] = {'border-bottom': ' solid', 'border-bottom-color': '#000000'}
+                # if filter_dict[i] == 'normal' or filter_dict[i] == 'abnormal':continue
+                display_list = [x for x in display_list if filter_dict[i] in x]
 
         if 'timestamp' not in display_list: display_list.append('timestamp')
 
