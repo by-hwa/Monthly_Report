@@ -50,11 +50,10 @@ def list2matrix(data, front):
     return matrix.astype(int)
 
 
-def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"], date=data['date']):
+def make_heat_map(monthdata=data["contiIndex"] + data["cycleIndex"], date=data['date'], colorscale=colorscale):
 
     global heatmap_zmax
     global heatmap_zmin
-    global colorscale
 
     monthdata = list2matrix(monthdata, front=9).copy()
     date_list = list(map(lambda x: f'{x.year%100}/{x.month}/{x.day}', date.unique()))
@@ -441,17 +440,19 @@ def main():
 
     @app.callback(
         Output(component_id='heat-map', component_property='figure'),
+        Output(component_id='health-percent', component_property='children'),
         Output(component_id='cyclic', component_property='style'),
         Output(component_id='conti', component_property='style'),
         Output(component_id='total', component_property='style'),
         Input(component_id='picked-date', component_property='date'),
+        State(component_id='threshold', component_property='value'),
         Input(component_id='cyclic', component_property='n_clicks'),
         Input(component_id='conti', component_property='n_clicks'),
         Input(component_id='total', component_property='n_clicks'),
         Input(component_id='apply', component_property='n_clicks'),
         prevent_initial_call=False,
     )
-    def update_chart(picked_date, *args):
+    def update_heatmap(picked_date, threshold, *args):
         global data
         global health_percent
         global month_data
@@ -459,19 +460,21 @@ def main():
         global filtered_data
         global heatmap_state
         global heatmap_selected_btn
+        global colorscale
 
         picked_date = datetime.date.fromisoformat(picked_date)
         filtered_data = data[(data['date'] - picked_date > datetime.timedelta(-31)) &
                              (data['date'] - picked_date <= datetime.timedelta(0))]
-
-        print(filtered_data)
 
         triggered_id = ctx.triggered_id
 
         style_list = [{}, {}, {}]
         location = {'cyclic': 0, 'conti': 1, 'total': 2}
 
-        if triggered_id == 'cyclic':
+        if triggered_id == 'apply':
+            health_percent = threshold / 100
+            colorscale[1] = [health_percent, "rgb(224,243,248)"]
+        elif triggered_id == 'cyclic':
             heatmap_state = "cycleIndex"
             heatmap_selected_btn = 'cyclic'
             limit = filtered_data["cycleIndex"].loc[filtered_data["cycleIndex"] > 0].quantile(health_percent/100)
@@ -486,21 +489,11 @@ def main():
 
         month_data = filtered_data[heatmap_state]
 
+        message = f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
+
         style_list[location[heatmap_selected_btn]] = {'border-bottom': ' solid', 'border-bottom-color': '#000000'}
 
-        return make_heat_map(monthdata=month_data.copy(), date=filtered_data['date'].copy()), *style_list
-
-    @app.callback(
-        Output(component_id='health-percent', component_property='children'),
-        State(component_id='threshold', component_property='value'),
-        Input(component_id='apply', component_property='n_clicks'),
-    )
-    def update_health_state(threshold, n_click):
-        global health_percent
-        global colorscale
-        colorscale[1] = [health_percent, "rgb(224,243,248)"]
-        health_percent = threshold / 100
-        return f'설정된 건정성 판정 기준은 {(health_percent * 100)}% 입니다.'
+        return make_heat_map(monthdata=month_data.copy(), date=filtered_data['date'].copy(), colorscale=colorscale), message, *style_list
 
     @app.callback(
         Output(component_id='bar-chart1', component_property='figure'),
