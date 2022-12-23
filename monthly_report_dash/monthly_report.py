@@ -105,6 +105,8 @@ def make_bar_chart1(operation_data=api_module.operation(timestamp)):
 
     fig = go.Figure()
 
+    print(operation_data)
+
     operation_data['diff'] = operation_data['time_to'] - operation_data['time_from']
     min_value = operation_data['diff'][operation_data['diff'] > 0].min()
     operation_data['diff'] = round((operation_data['time_to'] - operation_data['time_from']) / min_value).apply(int)
