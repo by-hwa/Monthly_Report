@@ -11,6 +11,9 @@
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 49 55" src="https://user-images.githubusercontent.com/102535447/205242819-a5041875-f4a0-4f25-984e-b40e1a34dbb3.png">
 
 ## Dash
+
+[Dash prototype link](http://15.165.236.197:8050/)
+
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 53 07" src="https://user-images.githubusercontent.com/102535447/205243543-1f42a449-f1be-4c80-8b69-0c5a44b89963.png">
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 53 29" src="https://user-images.githubusercontent.com/102535447/205243551-2ec906e5-d419-4ceb-b388-805b2c892553.png">
 <img width="100%" alt="스크린샷 2022-12-02 오후 4 53 42" src="https://user-images.githubusercontent.com/102535447/205243555-d04100f6-c59a-4a46-8914-7c006e2d4d04.png">
