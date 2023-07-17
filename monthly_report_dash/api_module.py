@@ -5,8 +5,7 @@ import datetime
 
 
 def rawdata(time_from, time_to):
-    api_endpoint1 = 'https://kdwyu8tywb.execute-api.ap-northeast-2.amazonaws.com/default/cushion_report_api'
-    api_endpoint2 = 'https://c5nidsaeoh.execute-api.ap-northeast-2.amazonaws.com/default/ingkle-an2-api-base-swhitech'
+    api_endpoint1 = 'none'
     r = requests.get(api_endpoint1 + f'?type=raw_data&time_from={time_from}&time_to={time_to}')
     try:
         data = pd.DataFrame(r.json()["values"], columns = r.json()["fields"])
@@ -18,8 +17,7 @@ def rawdata(time_from, time_to):
 
 
 def operation(time_from):
-    api_endpoint1 = 'https://kdwyu8tywb.execute-api.ap-northeast-2.amazonaws.com/default/cushion_report_api'
-    api_endpoint2 = 'https://c5nidsaeoh.execute-api.ap-northeast-2.amazonaws.com/default/ingkle-an2-api-base-swhitech'
+    api_endpoint1 = 'none'
     r = requests.get(api_endpoint1 + f'?type=all&time_from={time_from}&time_to={(time_from + 60 * 60)}')
     try:
         data = pd.DataFrame(r.json()["values"], columns=r.json()["fields"])
@@ -31,8 +29,7 @@ def operation(time_from):
 
 
 def min_data(time_from):
-    api_endpoint1 = 'https://kdwyu8tywb.execute-api.ap-northeast-2.amazonaws.com/default/cushion_report_api'
-    api_endpoint2 = 'https://c5nidsaeoh.execute-api.ap-northeast-2.amazonaws.com/default/ingkle-an2-api-base-swhitech'
+    api_endpoint2 = 'none'
     r = requests.get(api_endpoint2 + f'?type=mindex&time_from={time_from}&time_to={time_from + 60*60}')
     try:
         data = pd.DataFrame(r.json()["values"], columns = r.json()["fields"])
