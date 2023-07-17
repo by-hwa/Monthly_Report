@@ -33,4 +33,14 @@
 ## Monthly report prototype
 
 [Dash prototype link](http://15.165.236.197:8050/)
+
 <img width="1624" alt="스크린샷 2022-12-21 오전 11 03 00" src="https://user-images.githubusercontent.com/102535447/208803165-0dcbd75a-b6f0-41f7-ad70-3cf57774670a.png">
+* heatmap click 시 해당시간대의 제작 모델 번호, 건강도 display
+* 오른쪽 위의 건강도 bar 클릭시 해당 시간의 cycle dedail display
+
+### Heatmap Description
+* 건강도 : 금형 Cycle 별로 DWT를 계산하여 오차가 클수록 건강도가 큼(나쁨).
+<img width="846" alt="image" src="https://github.com/by-hwa/Monthly_Report/assets/102535447/96a6bb21-5f64-495a-9d1d-b7222e257e41">
+
+* 건강도 측정 알고리즘.
+<img width="921" alt="image" src="https://github.com/by-hwa/Monthly_Report/assets/102535447/3bab4ee1-4c35-4ee9-87b6-88edfacd0f2c">
